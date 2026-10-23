@@ -7,7 +7,7 @@
  * @param {string} props.tier - Proficiency tier of the skill.
  * @returns {JSX.Element} A list item containing the skill information.
  */
-function SkillBadge({ name = 'Unknown Skill', tier = 'Beginner' }) {
+function SkillBadge({ id, name = 'Unknown Skill', tier = 'Beginner' }) {
   return <li>{name} ({tier})</li>;
 }
 
