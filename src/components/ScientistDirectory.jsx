@@ -84,10 +84,15 @@ export default function ScientistDirectory() {
 
           <button type="submit">Search</button>
         </form>
-
+        <button
+  type="button"
+  onClick={() => setPeople(SMART_PEOPLE)}
+>
+  Reset
+        </button>
         <section aria-label="Directory results">
           <p role="status" aria-live="polite">
-            Showing {visible.length} of {people.length} people
+              Found {visible.length} pioneers
           </p>
 
           <ul>
@@ -101,6 +106,19 @@ export default function ScientistDirectory() {
                     <dt>IQ</dt>
                     <dd>{person.iq}</dd>
                   </dl>
+
+<button
+  type="button"
+  aria-label={`Delete ${person.name}`}
+  onClick={() => {
+    setPeople((prev) =>
+      prev.filter((p) => p.id !== person.id)
+    );
+  }}
+>
+  Delete
+</button>
+
                 </article>
               </li>
             ))}
