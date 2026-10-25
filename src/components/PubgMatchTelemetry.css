@@ -1,0 +1,71 @@
+
+.pubg-telemetry {
+  --telemetry-skeleton-bg: var(--color-surface-muted);
+  --telemetry-skeleton-highlight: var(--color-accent-muted);
+
+  display: grid;
+  gap: 1rem;
+}
+
+.squad-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.squad-selector button[aria-pressed="true"] {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  font-weight: 700;
+}
+
+.telemetry-skeleton {
+  box-sizing: border-box;
+  height: 220px;
+  overflow: hidden;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: var(--telemetry-skeleton-bg);
+  animation: radar-pulse 1.4s ease-in-out infinite;
+}
+
+.telemetry-skeleton p {
+  margin-top: 0;
+}
+
+.skeleton-bar {
+  display: block;
+  width: 65%;
+  height: 0.75rem;
+  margin-block: 0.75rem;
+  border-radius: 0.375rem;
+  background: var(--telemetry-skeleton-highlight);
+}
+
+.skeleton-bar.skeleton-title {
+  width: 45%;
+  height: 1.25rem;
+}
+
+@keyframes radar-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.telemetry-error {
+  padding: 1rem;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .telemetry-skeleton {
+    animation: none;
+  }
+}

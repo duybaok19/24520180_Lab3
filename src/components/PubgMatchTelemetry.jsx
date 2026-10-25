@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchKraftonPubgTelemetry } from '../api/fetchKraftonPubgTelemetry.js';
+import './PubgMatchTelemetry.css';
 
 /**
  * @param {{ squadId?: 'ces' | 'te' | 'ge' }} props
@@ -12,6 +13,13 @@ export default function PubgMatchTelemetry({ squadId = 'te' }) {
   });
 
   const [retryTick, setRetryTick] = useState(0);
+  const [selectedSquadId, setSelectedSquadId] = useState(squadId);
+
+  const squads = [
+    { id: 'ces', label: 'CES' },
+    { id: 'te', label: 'TE' },
+    { id: 'ge', label: 'GE' },
+  ];
 
   useEffect(() => {
     const controller = new AbortController();
@@ -22,7 +30,7 @@ export default function PubgMatchTelemetry({ squadId = 'te' }) {
       error: null,
     });
 
-    fetchKraftonPubgTelemetry(squadId, {
+    fetchKraftonPubgTelemetry(selectedSquadId, {
       signal: controller.signal,
     })
       .then((data) => {
@@ -47,48 +55,87 @@ export default function PubgMatchTelemetry({ squadId = 'te' }) {
     return () => {
       controller.abort();
     };
-  }, [squadId, retryTick]);
-
-  if (view.status === 'IDLE') {
-    return <p>Telemetry is idle.</p>;
-  }
-
-  if (view.status === 'LOADING') {
-    return <p>Loading PUBG telemetry...</p>;
-  }
-
-  if (view.status === 'ERROR') {
-    return <p>Telemetry error: {view.error}</p>;
-  }
-
-  const squad = view.data;
+  }, [selectedSquadId, retryTick]);
 
   return (
-    <article aria-live="polite">
+    <main className="pubg-telemetry">
       <header>
-        <h2>{squad.name}</h2>
-        <p>{squad.id.toUpperCase()}</p>
+        <h1>KRAFTON PUBG Vietnam Live Telemetry</h1>
       </header>
 
-      <dl>
-        <dt>Map</dt>
-        <dd>{squad.map}</dd>
+      <nav aria-label="Select squad" className="squad-selector">
+        {squads.map((squad) => (
+          <button
+            key={squad.id}
+            type="button"
+            aria-pressed={selectedSquadId === squad.id}
+            onClick={() => setSelectedSquadId(squad.id)}
+          >
+            {squad.label}
+          </button>
+        ))}
+      </nav>
 
-        <dt>Phase</dt>
-        <dd>{squad.phase}</dd>
+      {view.status === 'IDLE' && (
+        <p>Telemetry is idle.</p>
+      )}
 
-        <dt>Alive</dt>
-        <dd>{squad.alive}</dd>
+      {view.status === 'LOADING' && (
+        <section
+          className="telemetry-skeleton"
+          aria-busy="true"
+          aria-label="Loading match telemetry"
+        >
+          <p>Syncing KRAFTON Radar...</p>
 
-        <dt>Kills</dt>
-        <dd>{squad.kills}</dd>
+          <span className="skeleton-bar skeleton-title" />
+          <span className="skeleton-bar" />
+          <span className="skeleton-bar" />
+          <span className="skeleton-bar" />
+        </section>
+      )}
 
-        <dt>WWCD</dt>
-        <dd>{squad.wwcdProb}%</dd>
+      {view.status === 'ERROR' && (
+        <section role="alert" className="telemetry-error">
+          <p>Blue-Zone Link Lost: {view.error}</p>
 
-        <dt>Status</dt>
-        <dd>{squad.status}</dd>
-      </dl>
-    </article>
+          <button
+            type="button"
+            onClick={() => setRetryTick((tick) => tick + 1)}
+          >
+            Reconnect Satellite (Retry)
+          </button>
+        </section>
+      )}
+
+      {view.status === 'SUCCESS' && (
+        <article aria-live="polite">
+          <header>
+            <h2>{view.data.name}</h2>
+            <p>{view.data.id.toUpperCase()}</p>
+          </header>
+
+          <dl>
+            <dt>Map</dt>
+            <dd>{view.data.map}</dd>
+
+            <dt>Phase</dt>
+            <dd>{view.data.phase}</dd>
+
+            <dt>Alive</dt>
+            <dd>{view.data.alive}</dd>
+
+            <dt>Kills</dt>
+            <dd>{view.data.kills}</dd>
+
+            <dt>WWCD</dt>
+            <dd>{view.data.wwcdProb}%</dd>
+
+            <dt>Status</dt>
+            <dd>{view.data.status}</dd>
+          </dl>
+        </article>
+      )}
+    </main>
   );
 }
