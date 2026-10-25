@@ -162,24 +162,28 @@ dữ liệu, không viết component.
 ```
 `git commit -m "feat(ex2): normalize smartPeople schema with stable IDs"`
 
-### T2.2 — Derived state + Form → Commit 2
-```
-[đính kèm project-rules.md + smartPeople.js]
-Viết src/components/ScientistDirectory.jsx (chưa có delete/reset):
-- useState CHỈ cho dữ liệu gốc độc lập: people, query (''), minIq
-  (160), sortBy ('iq-desc').
-- Biến visible TÍNH TRONG RENDER: people.filter(tên chứa query,
-  không phân biệt hoa thường, trim) && iq >= minIq).toSorted(theo
-  sortBy: 'iq-desc' hoặc 'age-asc').
-- CẤM useEffect và CẤM useState thứ hai cho danh sách đã lọc.
-- Form: <form role="search" onSubmit preventDefault>; mỗi <input> có
-  <label htmlFor={id}> với id từ useId() (2 lần gọi riêng); ô IQ là
-  type="number" và đọc e.target.valueAsNumber, nếu NaN thì về 0;
-  thêm <select> sắp xếp cũng có label.
-- Danh sách: <ul> với key={p.id}. Không dùng <div>.
-```
-`git commit -m "feat(ex2): add search, IQ filter & toSorted"`
+T2.1 — Schema ổn định → Commit 1
 
+Dataset bắt buộc (7 người: 6 nhà khoa học theo slide + bản thân em, id cố định sp-1…sp-7):
+
+Johann Goethe (82, IQ 210) · Albert Einstein (76, 205) · Leonardo da Vinci (67, 180)
+Isaac Newton (84, 190) · James Maxwell (48, 190) · William Sidis (46, 200)
++ [TÊN CỦA EM] ([TUỔI], IQ [SỐ])   ← sp-7
+
+
+
+⚠️ Lưu ý bộ lọc mặc định minIq = 160 (theo slide): nếu IQ em đặt < 160 thì dòng của em sẽ bị ẩn khi mở trang và <output> chỉ báo 6. Chọn một trong hai: (a) đặt IQ của em ≥ 160, hoặc (b) hạ minIq mặc định xuống 0. Dù chọn cách nào cũng nhớ khi Live Defense là bộ đếm phải đúng (7 khi lọc rỗng, và Reset phải khôi phục đủ 7 người).
+
+[đính kèm project-rules.md]
+Tạo src/data/smartPeople.js export const SMART_PEOPLE = [...] gồm 7
+object { id, name, age, iq } với id ổn định 'sp-1'..'sp-7' (KHÔNG
+dùng Math.random()/index). Sáu người đầu: Johann Goethe 82/210,
+Albert Einstein 76/205, Leonardo da Vinci 67/180, Isaac Newton 84/190,
+James Maxwell 48/190, William Sidis 46/200. Người thứ bảy (sp-7):
+name '[TÊN CỦA EM]', age [TUỔI], iq [SỐ]. Thêm JSDoc kiểu cho Person.
+Chỉ viết file dữ liệu, không viết component.
+
+git commit -m "feat(ex2): normalize smartPeople schema with stable IDs"
 ### T2.3 — Delete / Reset / Live status → Commit 3
 ```
 [đính kèm ScientistDirectory.jsx hiện tại]
@@ -324,6 +328,59 @@ Chỉ ghi những lỗi **em thực sự gặp và đã chứng minh bằng DevT
 - [ ] Lighthouse Accessibility = 100
 
 ```
-git log --oneline
+git log --oneline:
+c720cbe (HEAD -> main, origin/main) docs(lab3): add AI failure audit
+63c046e feat(app): integrate scientist directory and PUBG telemetry
+8614917 feat(ex3): add skeleton UI & retry alert
+455ff69 feat(ex3): implement PUBG VN 4-state telemetry & AbortController
+ffd16a2 feat(ex3): add mock PUBG telemetry API
+21c7689 docs(ex3): define telemetry state contracts
+d4a8019 style(ex2): improve scientist directory layout
+11972f0 feat(ex2): add delete/reset & live status
+8e9092a feat(ex2): add search, IQ filter & toSorted
+:...skipping...
+c720cbe (HEAD -> main, origin/main) docs(lab3): add AI failure audit
+63c046e feat(app): integrate scientist directory and PUBG telemetry
+8614917 feat(ex3): add skeleton UI & retry alert
+455ff69 feat(ex3): implement PUBG VN 4-state telemetry & AbortController
+ffd16a2 feat(ex3): add mock PUBG telemetry API
+21c7689 docs(ex3): define telemetry state contracts
+d4a8019 style(ex2): improve scientist directory layout
+11972f0 feat(ex2): add delete/reset & live status
+8e9092a feat(ex2): add search, IQ filter & toSorted
+f177116 feat(ex2): normalize smartPeople schema with stable IDs
+:...skipping...
+c720cbe (HEAD -> main, origin/main) docs(lab3): add AI failure audit
+63c046e feat(app): integrate scientist directory and PUBG telemetry
+8614917 feat(ex3): add skeleton UI & retry alert
+455ff69 feat(ex3): implement PUBG VN 4-state telemetry & AbortController
+ffd16a2 feat(ex3): add mock PUBG telemetry API
+21c7689 docs(ex3): define telemetry state contracts
+d4a8019 style(ex2): improve scientist directory layout
+11972f0 feat(ex2): add delete/reset & live status
+8e9092a feat(ex2): add search, IQ filter & toSorted
+f177116 feat(ex2): normalize smartPeople schema with stable IDs
+4ee139c docs(lab3): add task decomposition for exercises
+8e8e488 fix(ex1): align SkillBadge props contract
+ff43e85 fix(ex1): standardize SkillBadge filename
+41e38f9 merge: combine GitHub README with local project
+fb6a9ca chore: initialize React 19 Lab 3 project
+:...skipping...
+c720cbe (HEAD -> main, origin/main) docs(lab3): add AI failure audit
+63c046e feat(app): integrate scientist directory and PUBG telemetry
+8614917 feat(ex3): add skeleton UI & retry alert
+455ff69 feat(ex3): implement PUBG VN 4-state telemetry & AbortController
+ffd16a2 feat(ex3): add mock PUBG telemetry API
+21c7689 docs(ex3): define telemetry state contracts
+d4a8019 style(ex2): improve scientist directory layout
+11972f0 feat(ex2): add delete/reset & live status
+8e9092a feat(ex2): add search, IQ filter & toSorted
+f177116 feat(ex2): normalize smartPeople schema with stable IDs
+4ee139c docs(lab3): add task decomposition for exercises
+8e8e488 fix(ex1): align SkillBadge props contract
+ff43e85 fix(ex1): standardize SkillBadge filename
+41e38f9 merge: combine GitHub README with local project
+fb6a9ca chore: initialize React 19 Lab 3 project
+adcc78d Initial commit
+
 ```
-_(dán kết quả vào đây trước khi nộp)_
