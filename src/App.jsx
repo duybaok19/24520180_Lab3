@@ -1,11 +1,12 @@
-import DeveloperCard from './components/DeveloperCard';
-import './App.css';
+import ScientistDirectory from './components/ScientistDirectory.jsx';
+import PubgMatchTelemetry from './components/PubgMatchTelemetry.jsx';
 
 function App() {
   return (
-    <main>
-      <DeveloperCard />
-    </main>
+    <>
+      <ScientistDirectory />
+      <PubgMatchTelemetry />
+    </>
   );
 }
 
