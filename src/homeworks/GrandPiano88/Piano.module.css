@@ -51,3 +51,38 @@
   height: 180px;
   z-index: 2;
 }
+
+.controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 20px;
+}
+
+.controls button,
+.controls select {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--piano-border);
+  border-radius: 6px;
+  font: inherit;
+}
+
+.controls button {
+  color: var(--piano-text);
+  background: #334155;
+  cursor: pointer;
+}
+
+.controls button:disabled,
+.controls select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.controls button:focus-visible,
+.controls select:focus-visible {
+  outline: 3px solid var(--piano-focus);
+  outline-offset: 3px;
+}

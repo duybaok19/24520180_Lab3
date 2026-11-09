@@ -91,18 +91,18 @@ export class PolyphonicSynth {
   }
 
   dispose() {
-    // Dừng tất cả voice đang hoạt động.
-    for (const midi of [...this.voices.keys()]) {
-      this.noteOff(midi);
-    }
+  const ctx = this.ctx;
 
-    // Đóng AudioContext.
-    if (this.ctx && this.ctx.state !== 'closed') {
-      this.ctx.close().catch((error) => {
-        console.error('Cannot close AudioContext:', error);
-      });
-    }
+  if (!ctx) return;
 
-    this.ctx = null;
+  for (const midi of [...this.voices.keys()]) {
+    this.noteOff(midi);
   }
+
+  this.ctx = null;
+
+  if (ctx.state !== 'closed') {
+    void ctx.close().catch(() => {});
+  }
+}
 }

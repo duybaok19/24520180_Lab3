@@ -1,61 +1,92 @@
+function createAbortError() {
+  return new DOMException('Playback was aborted', 'AbortError');
+}
+
 /**
- * @typedef {import('./types.js').RecordedEvent} RecordedEvent
- * @typedef {import('./types.js').PlaybackRate} PlaybackRate
+ * Chờ một khoảng thời gian.
+ * Có thể hủy bằng AbortSignal.
  */
+export function sleep(ms, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(createAbortError());
+      return;
+    }
+
+    const cleanup = () => {
+      signal?.removeEventListener('abort', handleAbort);
+    };
+
+    const timerId = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, Math.max(0, ms));
+
+    function handleAbort() {
+      clearTimeout(timerId);
+      cleanup();
+      reject(createAbortError());
+    }
+
+    signal?.addEventListener('abort', handleAbort, { once: true });
+  });
+}
 
 export class Recorder {
   constructor() {
-    this.startedAt = 0;
-
-    /**
-     * @type {(RecordedEvent & { _startedAt: number })[]}
-     */
     this.events = [];
-
-    // midi -> { freqHz, downAt }
     this.heldNotes = new Map();
-
+    this.completedEvents = new Set();
+    this.lastEventAt = 0;
     this.isRecording = false;
   }
 
   start() {
-    this.startedAt = performance.now();
     this.events = [];
     this.heldNotes.clear();
+    this.completedEvents.clear();
+
+    this.lastEventAt = performance.now();
     this.isRecording = true;
   }
 
   noteDown(midi, freqHz) {
-    if (!this.isRecording) return;
+    if (!this.isRecording || this.heldNotes.has(midi)) return;
 
-    // Không ghi trùng một MIDI đang được giữ.
-    if (this.heldNotes.has(midi)) return;
+    const now = performance.now();
+
+    const event = {
+      midi,
+      freqHz,
+      durationMs: 0,
+      deltaMs: now - this.lastEventAt,
+    };
+
+    // Thêm ngay khi nhấn để giữ đúng thứ tự nhấn phím.
+    this.events.push(event);
 
     this.heldNotes.set(midi, {
-      freqHz,
-      downAt: performance.now(),
+      downAt: now,
+      event,
     });
+
+    this.lastEventAt = now;
   }
 
   noteUp(midi) {
     if (!this.isRecording) return;
 
-    const note = this.heldNotes.get(midi);
+    const heldNote = this.heldNotes.get(midi);
+    if (!heldNote) return;
 
-    if (!note) return;
+    const now = performance.now();
 
-    const upAt = performance.now();
-    const durationMs = upAt - note.downAt;
+    heldNote.event.durationMs = Math.max(
+      0,
+      now - heldNote.downAt
+    );
 
-    // Lưu thời điểm nhấn để sắp xếp FIFO khi stop().
-    this.events.push({
-      midi,
-      freqHz: note.freqHz,
-      durationMs,
-      deltaMs: 0,
-      _startedAt: note.downAt,
-    });
-
+    this.completedEvents.add(heldNote.event);
     this.heldNotes.delete(midi);
   }
 
@@ -63,170 +94,124 @@ export class Recorder {
     this.isRecording = false;
     this.heldNotes.clear();
 
-    // Sắp xếp theo thời điểm nhấn, không phải thời điểm nhả.
-    const sortedEvents = [...this.events].sort(
-      (a, b) => a._startedAt - b._startedAt,
-    );
+    // Trả về bản sao, không để bên ngoài sửa dữ liệu nội bộ.
+    const result = this.events
+      .filter((event) => this.completedEvents.has(event))
+      .map((event) => ({ ...event }));
 
-    let previousStartedAt = this.startedAt;
-
-    const result = sortedEvents.map((event) => {
-      const { _startedAt, ...recordedEvent } = event;
-
-      const deltaMs = _startedAt - previousStartedAt;
-      previousStartedAt = _startedAt;
-
-      return {
-        ...recordedEvent,
-        deltaMs,
-      };
-    });
-
-    // Trả bản sao, không để bên ngoài sửa mảng nội bộ.
     return result;
   }
 }
 
 /**
- * Chờ một khoảng thời gian có hỗ trợ AbortSignal.
+ * Phát lại các sự kiện đã ghi.
  *
- * @param {number} ms
- * @param {AbortSignal} signal
- * @returns {Promise<void>}
- */
-export function sleep(ms, signal) {
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) {
-      const error = new Error('Playback aborted');
-      error.name = 'AbortError';
-      reject(error);
-      return;
-    }
-
-    let timerId;
-
-    const cleanup = () => {
-      clearTimeout(timerId);
-      signal?.removeEventListener('abort', handleAbort);
-    };
-
-    const handleAbort = () => {
-      cleanup();
-
-      const error = new Error('Playback aborted');
-      error.name = 'AbortError';
-      reject(error);
-    };
-
-    timerId = setTimeout(() => {
-      signal?.removeEventListener('abort', handleAbort);
-      resolve();
-    }, Math.max(0, ms));
-
-    signal?.addEventListener('abort', handleAbort, {
-      once: true,
-    });
-  });
-}
-
-/**
- * Phát lại danh sách sự kiện theo thứ tự FIFO.
- *
- * @param {RecordedEvent[]} events
- * @param {PlaybackRate} rate
- * @param {{
- *   noteOn: (midi: number, freqHz: number) => void,
- *   noteOff: (midi: number) => void,
- *   signal: AbortSignal
- * }} options
+ * deltaMs: khoảng cách giữa hai lần nhấn phím.
+ * durationMs: thời gian giữ phím.
  */
 export async function replay(
   events,
   rate,
-  { noteOn, noteOff, signal },
+  { noteOn, noteOff, signal }
 ) {
   if (![0.5, 1, 2].includes(rate)) {
-    throw new RangeError('Playback rate must be 0.5, 1, or 2');
+    throw new RangeError('Playback rate must be 0.5, 1, or 2.');
   }
 
   const activeNotes = new Set();
-  const pendingTimers = new Map();
+  const pendingOffs = new Map();
 
-  // Dừng và giải phóng tất cả nốt đang replay.
-  const releaseAll = () => {
-    for (const timerId of pendingTimers.values()) {
-      clearTimeout(timerId);
+  function releaseAll() {
+    // Hủy tất cả timer noteOff đang chờ.
+    for (const [midi, pending] of pendingOffs) {
+      clearTimeout(pending.timerId);
+      pending.resolve();
+      pendingOffs.delete(midi);
     }
 
-    pendingTimers.clear();
-
+    // Giải phóng các nốt đang phát.
     for (const midi of activeNotes) {
       noteOff(midi);
     }
 
     activeNotes.clear();
-  };
-
-  const handleAbort = () => releaseAll();
-
-  if (signal.aborted) {
-    const error = new Error('Playback aborted');
-    error.name = 'AbortError';
-    throw error;
   }
 
-  signal.addEventListener('abort', handleAbort, {
-    once: true,
-  });
+  function handleAbort() {
+    releaseAll();
+  }
+
+  function scheduleNoteOff(midi, durationMs) {
+    return new Promise((resolve) => {
+      const timerId = setTimeout(() => {
+        pendingOffs.delete(midi);
+
+        if (activeNotes.has(midi)) {
+          noteOff(midi);
+          activeNotes.delete(midi);
+        }
+
+        resolve();
+      }, Math.max(0, durationMs / rate));
+
+      pendingOffs.set(midi, { timerId, resolve });
+    });
+  }
+
+  const offPromises = [];
 
   try {
+    if (signal?.aborted) {
+      throw createAbortError();
+    }
+
+    signal?.addEventListener('abort', handleAbort, { once: true });
+
     for (const event of events) {
-      // Chờ khoảng cách giữa hai lần nhấn.
+      // Chờ đến thời điểm nhấn nốt tiếp theo.
       await sleep(event.deltaMs / rate, signal);
 
-      if (signal.aborted) {
-        throw new Error('Playback aborted');
+      if (signal?.aborted) {
+        throw createAbortError();
       }
 
-      // Phát nốt.
-      noteOn(event.midi, event.freqHz);
-      activeNotes.add(event.midi);
+      // Tránh để một nốt MIDI bị phát chồng lên chính nó.
+      const previous = pendingOffs.get(event.midi);
 
-      // Hủy timer cũ nếu MIDI này đã có timer.
-      const previousTimer = pendingTimers.get(event.midi);
-
-      if (previousTimer !== undefined) {
-        clearTimeout(previousTimer);
-      }
-
-      // Lên lịch tắt nốt.
-      const timerId = setTimeout(() => {
-        pendingTimers.delete(event.midi);
+      if (previous) {
+        clearTimeout(previous.timerId);
+        previous.resolve();
+        pendingOffs.delete(event.midi);
 
         if (activeNotes.has(event.midi)) {
           noteOff(event.midi);
           activeNotes.delete(event.midi);
         }
-      }, Math.max(0, event.durationMs / rate));
+      }
 
-      pendingTimers.set(event.midi, timerId);
+      noteOn(event.midi, event.freqHz);
+      activeNotes.add(event.midi);
+
+      offPromises.push(
+        scheduleNoteOff(event.midi, event.durationMs)
+      );
     }
 
-    // Chờ tất cả nốt cuối cùng kết thúc.
-    while (pendingTimers.size > 0) {
-      await sleep(10, signal);
+    // Chờ tất cả nốt được thả tự nhiên.
+    await Promise.all(offPromises);
+
+    if (signal?.aborted) {
+      throw createAbortError();
     }
   } catch (error) {
     releaseAll();
 
-    if (signal.aborted || error.name === 'AbortError') {
-      const abortError = new Error('Playback aborted');
-      abortError.name = 'AbortError';
-      throw abortError;
+    if (signal?.aborted || error.name === 'AbortError') {
+      throw createAbortError();
     }
 
     throw error;
   } finally {
-    signal.removeEventListener('abort', handleAbort);
+    signal?.removeEventListener('abort', handleAbort);
   }
 }
