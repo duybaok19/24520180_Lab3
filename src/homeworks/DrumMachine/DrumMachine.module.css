@@ -1,0 +1,180 @@
+
+.drumMachine {
+  --dm-bg: #0b1020;
+  --dm-card: #151c2e;
+  --dm-pad: #26344f;
+  --dm-pad-hover: #354665;
+  --dm-active: #312e81;
+  --dm-border: #64748b;
+  --dm-text: #f8fafc;
+  --dm-muted: #cbd5e1;
+  --dm-focus: #fbbf24;
+  --dm-meter: #34d399;
+
+  box-sizing: border-box;
+  width: min(100% - 32px, 1000px);
+  min-width: 0;
+  margin-inline: auto;
+  padding-block: 32px 56px;
+  color: var(--dm-text);
+  background: var(--dm-bg);
+  overflow-wrap: anywhere;
+}
+
+.drumMachine *,
+.drumMachine *::before,
+.drumMachine *::after {
+  box-sizing: border-box;
+}
+
+.drumMachine h1 {
+  margin: 0 0 28px;
+  color: var(--dm-text);
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.drumMachine h2 {
+  margin: 0 0 16px;
+  color: var(--dm-text);
+  font-size: 1.25rem;
+}
+
+.drumMachine section {
+  min-width: 0;
+  margin-block: 24px;
+  padding: 20px;
+  background: var(--dm-card);
+  border: 1px solid var(--dm-border);
+  border-radius: 16px;
+}
+
+.drumMachine ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.drumMachine li {
+  min-width: 0;
+}
+
+.drumMachine button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px;
+  color: var(--dm-text);
+  background: var(--dm-pad);
+  border: 2px solid var(--dm-border);
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 650;
+  text-align: center;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+
+.drumMachine button:hover {
+  background: var(--dm-pad-hover);
+  border-color: var(--dm-text);
+}
+
+.drumMachine button:active {
+  transform: scale(0.98);
+}
+
+/* Focus rõ ràng khi điều hướng bằng bàn phím */
+.drumMachine button:focus-visible {
+  outline: 3px solid var(--dm-focus);
+  outline-offset: 4px;
+  border-color: var(--dm-focus);
+}
+
+/* Active không chỉ được nhận biết bằng màu */
+.drumMachine button[aria-pressed="true"] {
+  color: var(--dm-text);
+  background: var(--dm-active);
+  border: 3px double var(--dm-text);
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.drumMachine meter {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  height: 24px;
+  margin-block: 12px;
+  accent-color: var(--dm-meter);
+}
+
+.drumMachine output {
+  display: block;
+  margin-top: 10px;
+  color: var(--dm-muted);
+  line-height: 1.5;
+}
+
+.drumMachine ol {
+  display: grid;
+  gap: 8px;
+  padding-inline-start: 24px;
+  margin-block: 16px 0;
+  color: var(--dm-muted);
+}
+
+.drumMachine ol li {
+  padding-inline-start: 4px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Màn hình nhỏ */
+@media (max-width: 480px) {
+  .drumMachine {
+    width: calc(100% - 24px);
+    padding-block: 24px 40px;
+  }
+
+  .drumMachine section {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .drumMachine ul {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .drumMachine button {
+    min-height: 48px;
+  }
+}
+
+/* Tôn trọng cài đặt giảm chuyển động */
+@media (prefers-reduced-motion: reduce) {
+  .drumMachine button {
+    transition: none;
+  }
+
+  .drumMachine button:active {
+    transform: none;
+  }
+}

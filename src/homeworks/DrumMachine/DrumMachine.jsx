@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { PAD_LIST, padMap } from './pads.js';
 import { playDrum } from './drumSynth.js';
 import { useDrumKeyboard } from './useDrumKeyboard.js';
+import styles from './DrumMachine.module.css';
 
 export default function DrumMachine() {
   const [activeIds, setActiveIds] = useState([]);
@@ -57,7 +58,7 @@ export default function DrumMachine() {
   }, [level]);
 
   return (
-    <main>
+    <main className={styles.drumMachine}>
       <h1>Production Studio Drum Kit</h1>
 
       <section aria-label="Drum pads">
@@ -72,6 +73,12 @@ export default function DrumMachine() {
                   aria-pressed={isActive}
                   onPointerDown={() => onTrigger(pad.id, 'down')}
                   onPointerUp={() => onTrigger(pad.id, 'up')}
+                   onClick={(e) => {
+    if (e.detail === 0) {
+      onTrigger(pad.id, 'down');
+      onTrigger(pad.id, 'up');
+    }
+  }}
                 >
                   {pad.label} — {pad.code.replace('Key', '')}
                 </button>
