@@ -1,13 +1,7 @@
-import ScientistDirectory from './components/ScientistDirectory.jsx';
-import PubgMatchTelemetry from './components/PubgMatchTelemetry.jsx';
+import KraftonPubgVnArena from './homeworks/KraftonPubgVnArena/KraftonPubgVnArena';
 
 function App() {
-  return (
-    <>
-      <ScientistDirectory />
-      <PubgMatchTelemetry />
-    </>
-  );
+  return <KraftonPubgVnArena />;
 }
 
 export default App;
