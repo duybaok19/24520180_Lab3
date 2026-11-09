@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { PAD_LIST, padMap } from './pads.js';
 import { playDrum } from './drumSynth.js';
@@ -6,6 +6,8 @@ import { useDrumKeyboard } from './useDrumKeyboard.js';
 
 export default function DrumMachine() {
   const [activeIds, setActiveIds] = useState([]);
+  const [hits, setHits] = useState([]);
+  const [level, setLevel] = useState(0);
 
   const onTrigger = useCallback((id, phase) => {
     const pad = PAD_LIST.find((item) => item.id === id);
@@ -13,25 +15,46 @@ export default function DrumMachine() {
     if (!pad) return;
 
     if (phase === 'down') {
-      // Cập nhật state immutable, tránh thêm trùng id
       setActiveIds((prev) =>
         prev.includes(id) ? prev : [...prev, id]
       );
 
-      // Phát âm thanh khi nhấn
       playDrum(pad.voice);
+
+      // Thêm hit mới, chỉ giữ tối đa 10 lần gần nhất
+      const entry = {
+        id: crypto.randomUUID(),
+        label: pad.label,
+        time: new Date().toLocaleTimeString('vi-VN'),
+      };
+
+      setHits((prev) => [...prev, entry].slice(-10));
+
+      // Cập nhật mức hoạt động âm thanh
+      setLevel(100);
     }
 
     if (phase === 'up') {
-      // Gỡ id khỏi danh sách active
       setActiveIds((prev) =>
         prev.filter((activeId) => activeId !== id)
       );
     }
   }, []);
 
-  // Kích hoạt điều khiển bằng bàn phím
   useDrumKeyboard(padMap, onTrigger);
+
+  // Giảm level dần về 0 và cleanup timer
+  useEffect(() => {
+    if (level <= 0) return undefined;
+
+    const timer = setInterval(() => {
+      setLevel((prev) => Math.max(0, prev - 5));
+    }, 50);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [level]);
 
   return (
     <main>
@@ -57,7 +80,41 @@ export default function DrumMachine() {
           })}
         </ul>
       </section>
+
+      <section aria-label="Audio activity">
+        <h2>Volume Meter</h2>
+
+        <meter
+          min={0}
+          max={100}
+          value={level}
+          aria-label="Audio activity level"
+        >
+          {level}%
+        </meter>
+
+        <output aria-label="Audio activity level">
+          {level}%
+        </output>
+      </section>
+
+      <section aria-label="Hit history">
+        <h2>Hit History</h2>
+
+        <output aria-live="polite" aria-label="Latest hit">
+          {hits.length > 0
+            ? `${hits[hits.length - 1].label} — ${hits[hits.length - 1].time}`
+            : 'Chưa có lượt đánh trống'}
+        </output>
+
+        <ol>
+          {hits.map((entry) => (
+            <li key={entry.id}>
+              {entry.label} — {entry.time}
+            </li>
+          ))}
+        </ol>
+      </section>
     </main>
   );
 }
-
