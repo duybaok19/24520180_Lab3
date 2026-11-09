@@ -1,0 +1,53 @@
+.piano {
+  --piano-bg: #151923;
+  --piano-text: #f8fafc;
+  --piano-border: #64748b;
+  --piano-focus: #fbbf24;
+
+  width: 100%;
+  min-width: 0;
+  padding: 24px 16px;
+  color: var(--piano-text);
+  background: var(--piano-bg);
+  box-sizing: border-box;
+}
+
+.piano h1 {
+  margin-block: 0 24px;
+  font-size: 1.5rem;
+}
+
+.pianoViewport {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  padding: 12px 4px 8px;
+  box-sizing: border-box;
+}
+
+.keyList {
+  display: flex;
+  align-items: flex-start;
+  width: max-content;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.whiteSlot {
+  position: relative;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 180px;
+}
+
+.blackSlot {
+  position: relative;
+  flex: 0 0 0;
+  width: 0;
+  height: 180px;
+  z-index: 2;
+}
